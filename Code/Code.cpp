@@ -2,45 +2,51 @@
 #include <stdlib.h>
 #include <time.h>
 
-int main(void) {
-    int screenW = GetSystemMetrics(SM_CXSCREEN);
-    int screenH = GetSystemMetrics(SM_CYSCREEN);
+#define SCREEN_WIDTH GetSystemMetrics(SM_CXSCREEN)
+#define SCREEN_HEIGHT GetSystemMetrics(SM_CYSCREEN)
 
-    srand((unsigned)time(NULL));
+HICON icons[] = {
+    LoadIcon(NULL, IDI_APPLICATION),
+    LoadIcon(NULL, IDI_ASTERISK),
+    LoadIcon(NULL, IDI_ERROR),
+    LoadIcon(NULL, IDI_EXCLAMATION),
+    LoadIcon(NULL, IDI_HAND),
+    LoadIcon(NULL, IDI_INFORMATION),
+    LoadIcon(NULL, IDI_QUESTION),
+    LoadIcon(NULL, IDI_WARNING),
+    LoadIcon(NULL, IDI_WINLOGO),
+    LoadIcon(NULL, IDI_SHIELD)
+};
 
-    // Initial warning messages
-    if (MessageBoxW(NULL,
-        L"Attention — you just ran WINTILE 3 which does NOT harm your computer. It will just show a lot of popups.\r\n"
-        L"DO YOU WANT TO EXECUTE THIS?",
-        L"WINTILE 3", MB_YESNO | MB_ICONEXCLAMATION) == IDNO)
-        ExitProcess(0);
+size_t s_icons = sizeof(icons) / sizeof(HICON);
 
-    if (MessageBoxW(NULL,
-        L"THIS IS THE LAST WARNING!\r\n\r\n"
-        L"DO YOU WANNA EXECUTE IT?\r\n"
-        L"STILL EXECUTE IT?",
-        L"WINTILE 3", MB_YESNO | MB_ICONEXCLAMATION) == IDNO)
-        ExitProcess(0);
+void DrawIcon() {
+    HWND hWnd = GetDesktopWindow();
+    HDC hdc = GetWindowDC(hWnd);
 
-    MessageBoxW(NULL, L"Executing...", L"WINTILE 3", MB_OK | MB_ICONINFORMATION);
+    DrawIcon(hdc, rand() % (SCREEN_WIDTH - 32), rand() % (SCREEN_HEIGHT - 32), icons[rand() % s_icons]);
 
-    DWORD startTime = GetTickCount();
+    ReleaseDC(hWnd, hdc);
+}
 
-    // Show random error popups for 5 seconds
-    while (GetTickCount() - startTime < 5000) {
-        // Random position for the message box (optional)
-        int x = rand() % (screenW - 300);
-        int y = rand() % (screenH - 150);
+int main() {
+    srand((unsigned int)time(NULL)); // Seed random
 
-        // Spawn the message box
-        MessageBoxW(
-            NULL,
-            L"Still using this PC?",
-            L"Error",
-            MB_OK | MB_ICONERROR
-        );
+    // Show warning first
+    int result = MessageBoxW(
+        NULL,
+        L"Warning!\nThis program will display icons all over your screen.\nDo you want to continue?",
+        L"Warning",
+        MB_YESNO | MB_ICONWARNING
+    );
 
-        Sleep(100 + rand() % 2000000); // random short delay
+    if (result == IDYES) {
+        // Only run the icon spam if user pressed Yes
+        while (1) {
+            DrawIcon();
+        }
+    } else {
+        MessageBoxW(NULL, L"Program aborted.", L"Info", MB_OK | MB_ICONINFORMATION);
     }
 
     return 0;
